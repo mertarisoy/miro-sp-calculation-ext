@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="https://miro.com/app/static/sdk.1.1.js"></script>
+    <script>
+        miro.onReady(() => {
+            miro.initialize({
+                extensionPoints: {
+                    bottomBar: {
+                        title: 'Calculate SP',
+                        svgIcon: '<circle cx="12" cy="12" r="9" fill="none" fill-rule="evenodd" stroke="currentColor" stroke-width="2"/>',
+                        onClick: () => {
+                            miro.board.selection.get().then(objects => {
+                                var cards = filterCardsOnly(objects);
+                                let totalSp = calculateStoryPointsForSelection(cards);
+
+                                miro.showNotification('Calculated SP -> ' + totalSp);
+                            })
+                        }
+                    }
+                }
+            })
+        })
+
+        function filterCardsOnly(objects) {
+            return objects.filter(obj => obj.type === 'CARD');
+        }
+
+        function calculateStoryPointsForSelection(cards) {
+            if (!cards) {
+                return 0;
+            }
+
+            let totalSp = cards.reduce((acc, card) => {
+                let sp = extractStoryPoints(card);
+                return acc + sp;
+            }, 0);
+
+            return totalSp;
+        }
+
+        function extractStoryPoints(card) {
+            if (!card) {
+                return 0;
+            }
+
+            var sps = searchStoryPoints(card.title);
+
+            console.log(sps);
+
+            let totalSp = sps.reduce((acc, item) => {
+                let rgx = /\d+/g;
+                var match = item.match(rgx);
+
+                if (!match) {
+                    return acc;
+                }
+
+                let sp = parseInt(match);
+                return acc + sp;
+            }, 0);
+
+            return totalSp;
+        }
+
+        function searchStoryPoints(str) {
+            let rgx = /\d+[ ]*sp/gi;
+            let matches = str.match(rgx);
+
+            if (!matches) {
+                return [];
+            }
+
+            return [matches[matches.length - 1]];
+        }
+    </script>
+</head>
+
+</html>
